@@ -1,3 +1,7 @@
+// TODO Explain Includes
+#include "request.h"
+#include "response.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -5,11 +9,13 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 void childprocess(int sock) {
-    char buffer[256];
-    bzero(buffer, 256);
-    int n = read( sock, buffer, 255);
+    char buffer[512];
+    bzero(buffer, 512);
+    int n = read( sock, buffer, 511);
 
     if( n < 0) {
         perror("ERROR reading from socket");
@@ -21,8 +27,12 @@ void childprocess(int sock) {
 
     /* Respond to the user agent */
 
-    char *response = "hi\n";
-    n = write(sock, response, sizeof(response));
+    struct httpResponse HR;
+    getResource("static/index.html", &HR);
+
+    char* response = HR.response;
+
+    n = write(sock, response, strlen(response));
     if( n < 0) {
         perror("ERROR writing to socket");
         exit(1);
@@ -63,6 +73,7 @@ int main() {
         int clilen = sizeof(cli_addr);
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
+        /* TODO Create a child thread */
         /* Create a child process */
         int pid = fork();
 
