@@ -3,8 +3,9 @@
 
 struct httpResponse {
     char *messageBody;
-
     char *response;
+
+    int status;
 };
 
 /* Return 1 on success, 0 on failure. */

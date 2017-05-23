@@ -11,19 +11,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pthread.h>
 
-void childprocess(int sock) {
-    char buffer[512];
-    bzero(buffer, 512);
-    int n = read( sock, buffer, 511);
+void *threadprocess(int *sock) {
+    printf("%u begins \n", pthread_self());
+    char buffer[1024];
+    bzero(buffer, 1024);
+    int n = read(*sock, buffer, 1024);
 
     if( n < 0) {
         perror("ERROR reading from socket");
         exit(1);
     }
 
+    printf("%u starts printing: \n", pthread_self());
     printf("%s \n", buffer);
-    printf("-------------------------\n");
+    printf("%u stops printing: \n", pthread_self());
 
     /* Respond to the user agent */
 
@@ -32,11 +35,15 @@ void childprocess(int sock) {
 
     char* response = HR.response;
 
-    n = write(sock, response, strlen(response));
+    n = write(*sock, response, strlen(response));
     if( n < 0) {
         perror("ERROR writing to socket");
         exit(1);
     }
+    close(*sock);
+
+    printf("%u ends \n\n", pthread_self());
+    return 0;
 }
 
 int main() {
@@ -67,30 +74,22 @@ int main() {
     /* Listen for connections */
     listen(sockfd, 5);
 
-    /* Accept 256 connections from clients */
-    unsigned char x = 255;
-    while(x > 0) {
+    pthread_t *tid = malloc( sizeof(pthread_t) * 255);
+
+    /* Accept connections from clients */
+    for(int i = 0; i < 255; i++) {
         int clilen = sizeof(cli_addr);
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
-        /* TODO Create a child thread */
-        /* Create a child process */
-        int pid = fork();
+        /* Create a child thread */
+        pthread_create(&tid[i], NULL, threadprocess, &newsockfd );
 
-        if( pid < 0) {
-            perror("ERROR on fork");
-            exit(1);
-        }
-
-        if( pid == 0) {
-            close(sockfd);
-            childprocess(newsockfd);
-            exit(0);
-        } else {
-            close(newsockfd);
-        }
-        x--;
+        i++;
     }
+
+    /* Wait until connections close */
+    for(int i = 0; i < 255; i++)
+        pthread_join(tid[i], NULL);
 
     return 0;
 }

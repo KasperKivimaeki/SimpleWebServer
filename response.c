@@ -9,17 +9,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void createMessage(struct httpResponse* target) {
+void createResponse(struct httpResponse* target) {
     int len = strlen(target->messageBody);
-    int newlen = len + 2;
+    int newlen = len + 3;
 
     char* response = malloc(sizeof(char) * len);
     strncpy(response, target->messageBody, len);
 
-    response[newlen - 2] =  10; /* newline */
+    response[newlen - 3] =  10; /* newline */
+    response[newlen - 2] =  0; /* null */
     response[newlen - 1] =  0; /* null */
 
     target->response = response;
+
+    target->status = 300; /* OK */
 }
 
 int getResource(char* path, struct httpResponse* target) {
@@ -31,7 +34,7 @@ int getResource(char* path, struct httpResponse* target) {
 
     target->messageBody = data;
 
-    createMessage(target);
+    createResponse(target);
     return 1;
 }
 
