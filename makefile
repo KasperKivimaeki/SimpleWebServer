@@ -4,14 +4,13 @@ SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 EXECUTABLE = webserver
 
-all: $(EXECUTABLE)
+all:  $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJ)
 	$(CC) $^ $(CFLAGS) -o $(EXECUTABLE)
-
 
 %.o: %.c
 	$(CC) -o $@ -c $<
 
 clean:
-	@rm -f *.o $(EXECUTABLE)
+	@rm -f *.o $(EXECUTABLE) 
